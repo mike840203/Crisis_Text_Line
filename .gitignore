@@ -1,0 +1,7 @@
+.venv
+data/bronze/*
+data/gold/*
+data/raw_data/*
+data/silver/*
+data/raw_data/*
+.git
