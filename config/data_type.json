@@ -1,0 +1,38 @@
+{
+  "GENDER": {
+    "1": "Male",
+    "2": "Female",
+    "-9": "Missing/unknown/not collected/invalid"
+  },
+  "RACE": {
+    "1": "American Indian/Alaska Native",
+    "2": "Asian",
+    "3": "Black or African American",
+    "4": "Native Hawaiian or Other Pacific Islander",
+    "5": "White",
+    "6": "Some other race alone/two or more races",
+    "-9": "Missing/unknown/not collected/invalid"
+  },
+  "ETHNIC": {
+    "1": "Mexican",
+    "2": "Puerto Rican",
+    "3": "Other Hispanic or Latino origin ",
+    "4": "Not of Hispanic or Latino origin",
+    "-9": "Missing/unknown/not collected/invalid "
+  },
+  "MARSTAT": {
+    "1": "Never Married",
+    "2": "Now Married",
+    "3": "Separated",
+    "4": "Divorced, widowed",
+    "-9": "Missing/unknown/not collected/invalid"
+  },
+  "EMPLOY": {
+    "1": "Full-time",
+    "2": "Part-time",
+    "3": "Employed full-time/part-time not differentiated ",
+    "4": "Unemployed",
+    "5": "Not in labor force",
+    "-9": "Missing/unknown/not collected/invalid"
+  }
+}
