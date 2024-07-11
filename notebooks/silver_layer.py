@@ -1,21 +1,21 @@
 import json
 import logging
 from datetime import datetime
-from pyspark.sql.functions import col, when
+from pyspark.sql.functions import col, when, lit, concat_ws, format_number
 from pyspark.sql import SparkSession
 from scripts.common import write_data
+# from pyspark.ml.feature import MinMaxScaler, StandardScaler
+# from pyspark.ml.linalg import Vectors
 
 def read_config(file_apth):
     with open(file_apth, 'r') as f:
         return json.load(f)
 
 
-def data_type_transform1(df):
+def convert_columns_to_string(df, columns):
     """
     Performs data type transformation num => string
     """
-    # Didn't find 'INCOME'
-    columns = ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY']
     config_path = "../config/data_type.json"
     config = read_config(config_path)
 
@@ -28,15 +28,99 @@ def data_type_transform1(df):
     return df
 
 
-def data_type_transform2(df):
-    """
-    Performs data type transformation num => float
-    """
-    columns = ['MENHLTH', 'PHYHLTH', 'POORHLTH']
+# def convert_columns_to_float(df, cloumn):
+#     """
+#     Performs data type transformation num => float
+#     """
+#
+#     return df
 
-    # Not able to find columns in dataset
 
-    return df
+# def normalize_and_standardize_columns(df, columns):
+#
+#     for column in columns:
+#         # Change to vector
+#         df = df.withColumn(f"{column}_vector", Vectors.dense(df[column]))
+#
+#         # normalize
+#         min_max_scaler = MinMaxScaler(inputCol=f"{column}_vector", outputCol=f"{column}_normalized")
+#         min_max_model = min_max_scaler.fit(df)
+#         df = min_max_model.transform(df).drop(f"{column}_vector")
+#
+#         # Change to vector
+#         df = df.withColumn(f"{column}_vector", Vectors.dense(df[column]))
+#
+#         # standardize
+#         standard_scaler = StandardScaler(inputCol=f"{column}_vector", outputCol=f"{column}_standardized", withStd=True, withMean=True)
+#         standard_model = standard_scaler.fit(df)
+#         df = standard_model.transform(df).drop(f"{column}_vector")
+#
+#     return df
+
+
+def partition_and_sample_data(df, stratified_columns, train_fraction=0.8, validation_fraction=0.1):
+
+    # Create a new stratified column containing the combination of all stratified columns
+    df = df.withColumn("stratified_col", concat_ws("_", *stratified_columns))
+
+
+    # Set sampling fractions
+    fractions_df = df.select("stratified_col").distinct().withColumn("fraction", lit(train_fraction))
+    fractions = {row["stratified_col"]: row["fraction"] for row in fractions_df.collect()}
+
+    # Perform stratified sampling to get the training set
+    train_df = df.stat.sampleBy("stratified_col", fractions, seed=12345)
+
+    # The remaining data is used as the test set
+    test_df = df.subtract(train_df)
+
+    # Set sampling fractions for the validation set within the training set
+    train_fractions_df = train_df.select("stratified_col").distinct().withColumn("fraction", lit(validation_fraction))
+    train_fractions = {row["stratified_col"]: row["fraction"] for row in train_fractions_df.collect()}
+
+    # Perform stratified sampling to get the validation set
+    validation_df = train_df.stat.sampleBy("stratified_col", train_fractions, seed=12345)
+
+    # Update the training set by removing the validation set portion
+    train_df_updated = train_df.subtract(validation_df)
+
+    # Drop the temporary stratified column
+    train_df_updated = train_df_updated.drop("stratified_col")
+    test_df = test_df.drop("stratified_col")
+    validation_df = validation_df.drop("stratified_col")
+
+    df_dict = {
+        "training": train_df_updated,
+        "testing": test_df,
+        "validation": validation_df
+    }
+
+    return df_dict
+
+
+def check_proportions(train_df, test_df, validation_df, stratified_columns):
+
+    # Calculate the proportion of each subgroup in the training dataset
+    train_counts = train_df.groupBy(*stratified_columns).count().withColumnRenamed("count", "train_count")
+    train_total_count = train_df.count()
+    train_counts = train_counts.withColumn("train_proportion", format_number(train_counts["train_count"] * 100 / train_total_count, 2))
+
+    # Calculate the proportion of each subgroup in the testing dataset
+    test_counts = test_df.groupBy(*stratified_columns).count().withColumnRenamed("count", "test_count")
+    test_total_count = test_df.count()
+    test_counts = test_counts.withColumn("test_proportion", format_number(test_counts["test_count"] * 100 / test_total_count, 2))
+
+    # Calculate the proportion of each subgroup in the original dataset
+    validation_counts = validation_df.groupBy(*stratified_columns).count().withColumnRenamed("count", "validation_count")
+    total_count = validation_df.count()
+    validation_counts = validation_counts.withColumn("validation_proportion",
+                                                 format_number(validation_counts["validation_count"] * 100 / total_count,
+                                                               2))
+
+    # Merge results for comparison
+    proportions_df = train_counts.join(test_counts, stratified_columns, "outer").join(validation_counts,
+                                                                                          stratified_columns, "outer")
+    proportions_df.orderBy(col("train_count").desc()).show(truncate=False)
 
 
 if __name__ == "__main__":
@@ -46,14 +130,14 @@ if __name__ == "__main__":
     log_filename = f"{timestamp}.log"
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(levelname)s - %(message)s',
-                        handlers=[logging.FileHandler(f"../logs/bronze/{log_filename}"),
+                        handlers=[logging.FileHandler(f"../logs/silver/{log_filename}"),
                                   logging.StreamHandler()])
 
     # Initialize Spark Session
     spark = SparkSession.builder \
         .appName("Data Ingestion") \
-        .config("spark.executor.memory", "4g") \
-        .config("spark.driver.memory", "4g") \
+        .config("spark.executor.memory", "8g") \
+        .config("spark.driver.memory", "8g") \
         .getOrCreate()
 
     # Define file paths
@@ -63,15 +147,26 @@ if __name__ == "__main__":
     df = spark.read.parquet("../data/bronze")
 
     # 1-1. Data Type Conversion
-    df = data_type_transform1(df)
+    # Didn't find 'INCOME'
+    columns = ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY']
+    df = convert_columns_to_string(df, columns)
 
     # 1-2. Data Type Conversion
-    df = data_type_transform2(df)
+    # Not able to find columns in dataset
+    # columns = ['MENHLTH', 'PHYHLTH', 'POORHLTH']
+    # df = convert_columns_to_float(df, columns)
 
-    # 2 Normalize & Standardize
+    # 2. Normalize & Standardize
+    # columns = ['MENHLTH', 'PHYHLTH', 'POORHLTH']
+    # df = normalize_and_standardize_columns(df, columns)
 
+    # 3. Split data into training, testing, validation
+    stratified_columns = ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY']
+    df_dict = partition_and_sample_data(df, stratified_columns)
 
+    # Portion check
+    check_proportions(df, df_dict['training'], df_dict['testing'], stratified_columns)
 
     # # Save transformed data to silver layer
-
-    write_data(df, silver_output_path, logging, partition_column='STATEFIP')
+    for name, df in df_dict.items():
+        write_data(df, f"{silver_output_path}/{name}", logging, partition_column='STATEFIP')

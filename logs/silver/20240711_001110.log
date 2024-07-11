@@ -1,0 +1,4 @@
+2024-07-11 00:14:18,783 - INFO - Writing data to ../data/silver/training, partitioned by STATEFIP
+2024-07-11 00:15:17,353 - INFO - Writing data to ../data/silver/testing, partitioned by STATEFIP
+2024-07-11 00:16:03,756 - INFO - Writing data to ../data/silver/validation, partitioned by STATEFIP
+2024-07-11 00:16:33,142 - INFO - Closing down clientserver connection
