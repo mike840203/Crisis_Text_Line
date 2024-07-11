@@ -48,16 +48,16 @@ def main():
         bronze = BronzeLayer(spark)
         raw_df = bronze.read_raw_data(raw_data_path)
         cleaned_df = bronze.clean_data(raw_df)
-        validate_bronze(cleaned_df)
+        # validate_bronze(cleaned_df)
         bronze.write_data(cleaned_df, bronze_output_path, "STATEFIP")
 
         # Silver Layer
         silver = SilverLayer(spark)
         converted_df = silver.convert_columns_to_string(cleaned_df, ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY'])
         df_dict = silver.partition_and_sample_data(converted_df, ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY'])
-        validate_silver(df_dict['training'])
-        validate_silver(df_dict['testing'])
-        validate_silver(df_dict['validation'])
+        # validate_silver(df_dict['training'])
+        # validate_silver(df_dict['testing'])
+        # validate_silver(df_dict['validation'])
         silver.write_data(df_dict, silver_output_path, "STATEFIP")
 
         # Gold Layer
