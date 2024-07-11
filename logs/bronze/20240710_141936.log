@@ -1,0 +1,6 @@
+2024-07-10 14:19:38,538 - INFO - Reading raw data from ../data/raw_data/mhcld_puf_2021.csv
+2024-07-10 14:19:45,302 - INFO - Cleaning data
+2024-07-10 14:19:51,975 - INFO - Schema is valid.
+2024-07-10 14:19:51,975 - INFO - Writing data to ../data/bronze, partitioned by STATEFIP
+2024-07-10 14:20:06,425 - INFO - Spark session stopped.
+2024-07-10 14:20:06,433 - INFO - Closing down clientserver connection
