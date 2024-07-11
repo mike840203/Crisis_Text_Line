@@ -5,3 +5,4 @@ data/raw_data/*
 data/silver/*
 data/raw_data/*
 .git
+logs/*

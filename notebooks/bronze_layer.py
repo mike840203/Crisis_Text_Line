@@ -1,39 +1,47 @@
 from pyspark.sql import SparkSession
 import logging
 from datetime import datetime
-from scripts.schema import expected_schema
-from scripts.data_validation import validate_schema, handle_schema_validation_failure
-from scripts.common import write_data
 
-def read_raw_data(spark, file_path):
-    """
-    Reads raw data from a CSV file into a DataFrame with the specified schema.
-    """
-    logging.info(f"Reading raw data from {file_path}")
-    return spark.read.csv(file_path, header=True, inferSchema=True)
+from pyspark.sql.types import StructType, StructField
+from scripts.common import load_schema, parse_schema, write_data
 
-def clean_data(df):
 
-    """
-    Performs basic data cleaning on the DataFrame.
-    """
-    logging.info("Cleaning data")
+class BronzeLayer:
+    def __init__(self, spark):
+        self.spark = spark
 
-    # Drop rows with all null values
-    df = df.dropna(how='all')
 
-    # Remove duplicates
-    df = df.dropDuplicates()
+    def read_raw_data(self, file_path):
+        """
+        Reads raw data from a CSV file into a DataFrame with the specified schema.
+        """
+        logging.info(f"Reading raw data from {file_path}",extra={'classname': self.__class__.__name__})
+        schema = parse_schema(load_schema("../scripts/schema/bronze_schema.json"))
 
-    # Validate data types
-    for field in expected_schema:
-        if df.schema[field.name].dataType != field.dataType:
-            df = df.withColumn(field.name, df[field.name].cast(field.dataType))
+        return self.spark.read.csv(file_path, header=True, schema=schema)
 
-    # Standardize formats
-    # df = df.toDF(*[c.lower() for c in df.columns])
+    def clean_data(self, df):
 
-    return df
+        """
+        Performs basic data cleaning on the DataFrame.
+        """
+        logging.info("Cleaning data by dropping rows with all null values.", extra={'classname': self.__class__.__name__})
+
+        # Drop rows with all null values
+        df = df.dropna(how='all')
+
+        # Remove duplicates
+        df = df.dropDuplicates()
+
+        # Standardize formats
+        # df = df.toDF(*[c.lower() for c in df.columns])
+
+        return df
+
+    def write_data(self, df, output_path, partition_column):
+        logging.info(f"Writing cleaned data to {output_path}, partitioned by {partition_column}.",
+                     extra={'classname': self.__class__.__name__})
+        write_data(df, output_path, logging, partition_column='STATEFIP')
 
 
 if __name__ == "__main__":
@@ -58,20 +66,10 @@ if __name__ == "__main__":
     bronze_output_path = "../data/bronze"
 
     try:
-        # Read raw data
-        df_raw = read_raw_data(spark, raw_data_path)
-
-        # Clean data
-        df_cleaned = clean_data(df_raw)
-
-        # Validate schema
-        if validate_schema(df_cleaned, expected_schema):
-            logging.info("Schema is valid.")
-            # Write cleaned data to Bronze layer
-            write_data(df_cleaned, bronze_output_path, logging, partition_column='STATEFIP')
-        else:
-            logging.error("Schema validation failed.")
-            handle_schema_validation_failure()
+        bronze = BronzeLayer(spark)
+        raw_df = bronze.read_raw_data(raw_data_path)
+        cleaned_df = bronze.clean_data(raw_df)
+        bronze.write_data(cleaned_df, bronze_output_path, "STATEFIP")
     except Exception as e:
         logging.error(f"An error occurred: {e}")
     finally:
