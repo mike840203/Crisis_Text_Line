@@ -1,4 +1,0 @@
-2024-07-10 20:55:27,059 - INFO - Writing data to train_df, partitioned by STATEFIP
-2024-07-10 20:56:35,028 - INFO - Writing data to test_df, partitioned by STATEFIP
-2024-07-10 20:57:22,968 - INFO - Writing data to validation_df, partitioned by STATEFIP
-2024-07-10 20:57:55,330 - INFO - Closing down clientserver connection
