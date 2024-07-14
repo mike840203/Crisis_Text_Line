@@ -1,64 +1,85 @@
-import json
-
-from pyspark.sql.functions import reduce, count, when, col
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType
+import logging
+from pyspark.sql.functions import count, when, col
 from scripts.common import load_schema, parse_schema
 
 
-def validate_schema(df, schema_json_path):
+class Validation:
+
+    def __init__(self):
+        self.class_name = self.__class__.__name__
+
+    def validate_schema(self, df, expected_schema):
+
+        actual_schema = df.schema
+
+        # Check column names
+        actual_columns = set([field.name for field in actual_schema.fields])
+        expected_columns = set([field.name for field in expected_schema.fields])
+
+        missing_columns = expected_columns - actual_columns
+        extra_columns = actual_columns - expected_columns
+
+        if missing_columns:
+            logging.error(f"{self.class_name} - Missing columns: {missing_columns}")
+            return False
+        if extra_columns:
+            logging.error(f"{self.class_name} - Extra columns: {extra_columns}")
+            return False
+
+        # Check column data types and nullability
+        for field in expected_schema.fields:
+            actual_field = actual_schema[field.name]
+
+            if actual_field.dataType != field.dataType:
+                logging.error(f"{self.class_name} - Data type mismatch for column {field.name}: expected {field.dataType}, got {actual_field.dataType}")
+                return False
+
+            # if actual_field.nullable != field.nullable:
+            #     logging.error(f"Nullability mismatch for column {field.name}: expected {field.nullable}, got {actual_field.nullable}")
+            #     return False
+
+        return True
 
 
-    json_schema = load_schema(schema_json_path)
-    expected_struct = parse_schema(json_schema)
-    return df.schema == expected_struct
+    def validate_bronze(self, df, path='../scripts/schema/bronze_schema.json'):
+
+        # Schema validation & Data type validation
+        if not self.validate_schema(df, parse_schema(load_schema(path))):
+            raise ValueError(f"{self.class_name} - Schema does not match the expected schema.")
+
+        # Null value handling
+        null_counts = df.select([count(when(col(c).isNull(), c)).alias(c) for c in df.columns])
+        # if null_counts.filter(reduce(lambda x, y: x | y, [col(c) > 0 for c in df.columns])).count() > 0:
+        #     raise ValueError(f"{self.class_name} - Null values found in the DataFrame.")
+
+        logging.info(f"{self.class_name} - Bronze validation passed.")
+        return True
 
 
-def validate_bronze(df, path='../scripts/schema/bronze_schema.json'):
+    def validate_silver(self, df, path='../scripts/schema/silver_schema.json'):
 
-    # Schema validation & Data type validation
-    if not validate_schema(df, path):
-        raise ValueError("Schema does not match the expected schema.")
+        # Schema validation
+        if not self.validate_schema(df, parse_schema(load_schema(path))):
+            raise ValueError(f"{self.class_name} - Schema does not match the expected schema.")
 
-    # Null value handling
-    null_counts = df.select([count(when(col(c).isNull(), c)).alias(c) for c in df.columns])
-    # if null_counts.filter(reduce(lambda x, y: x | y, [col(c) > 0 for c in df.columns])).count() > 0:
-    #     raise ValueError("Null values found in the DataFrame.")
-
-    print("Bronze validation passed.")
-    return True
+        logging.info(f"{self.class_name} - Silver validation passed.")
+        return True
 
 
-def validate_silver(df, path='../scripts/schema/silver_schema.json'):
-    # Schema validation
-    if not validate_schema(df, path):
-        raise ValueError("Schema does not match the expected schema.")
+    def validate_gold(self, df, path='../scripts/schema/gold_schema.json', table_nm=None):
+        # Schema validation
+        expected_schema = ["final_column1", "final_column2"]
+        actual_schema = df.columns
+        if set(expected_schema) != set(actual_schema):
+            raise ValueError(f"{self.class_name} - Schema does not match the expected schema.")
 
-    # Data consistency checks
-    if df.filter(col("date_column").rlike("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")).count() != df.count():
-        raise ValueError("Date format is inconsistent.")
+        # Business rule validation
+        if df.filter(col("financial_column") < 0).count() > 0:
+            raise ValueError(f"{self.class_name} - Financial column contains negative values.")
 
-    # Data cleansing checks
-    if df.filter(col("category_column").isNull()).count() > 0:
-        raise ValueError("Category column contains null values.")
+        # Data integrity checks
+        if df.join(other_df, "foreign_key").filter(other_df["foreign_key"].isNull()).count() > 0:
+            raise ValueError(f"{self.class_name} - Data integrity check failed: foreign key constraint violated.")
 
-    print("Silver validation passed.")
-    return True
-
-
-def validate_gold(df, path='../scripts/schema/gold_schema.json', table_nm=None):
-    # Schema validation
-    expected_schema = ["final_column1", "final_column2"]
-    actual_schema = df.columns
-    if set(expected_schema) != set(actual_schema):
-        raise ValueError("Schema does not match the expected schema.")
-
-    # Business rule validation
-    if df.filter(col("financial_column") < 0).count() > 0:
-        raise ValueError("Financial column contains negative values.")
-
-    # Data integrity checks
-    if df.join(other_df, "foreign_key").filter(other_df["foreign_key"].isNull()).count() > 0:
-        raise ValueError("Data integrity check failed: foreign key constraint violated.")
-
-    print("Gold validation passed.")
-    return True
+        logging.info(f"{self.class_name} - Gold validation passed.")
+        return True

@@ -6,7 +6,7 @@ from pyspark.sql import SparkSession
 from bronze_layer import BronzeLayer
 from silver_layer import SilverLayer
 from gold_layer import GoldLayer
-from scripts.validation import validate_bronze, validate_silver, validate_gold, load_schema
+from scripts.validation import Validation
 
 # Configure logging
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -36,6 +36,7 @@ def main():
         .config(conf=conf) \
         .getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")
+    validation = Validation()
 
     try:
         # File paths
@@ -48,16 +49,16 @@ def main():
         bronze = BronzeLayer(spark)
         raw_df = bronze.read_raw_data(raw_data_path)
         cleaned_df = bronze.clean_data(raw_df)
-        # validate_bronze(cleaned_df)
+        validation.validate_bronze(cleaned_df)
         bronze.write_data(cleaned_df, bronze_output_path, "STATEFIP")
 
         # Silver Layer
         silver = SilverLayer(spark)
         converted_df = silver.convert_columns_to_string(cleaned_df, ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY'])
         df_dict = silver.partition_and_sample_data(converted_df, ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY'])
-        # validate_silver(df_dict['training'])
-        # validate_silver(df_dict['testing'])
-        # validate_silver(df_dict['validation'])
+        validation.validate_silver(df_dict['training'])
+        validation.validate_silver(df_dict['testing'])
+        validation.validate_silver(df_dict['validation'])
         silver.write_data(df_dict, silver_output_path, "STATEFIP")
 
         # Gold Layer
@@ -75,9 +76,9 @@ def main():
         gold.create_service_utilization_table(test_df, f"{gold_output_path}/service_utilization/test")
         gold.create_service_utilization_table(validation_df, f"{gold_output_path}/service_utilization/validation")
 
-        logger.info("Data processing pipeline completed successfully.", extra={'classname': 'Main'})
+        logger.info("Data processing pipeline completed successfully.")
     except Exception as e:
-        logger.error(f"Data processing pipeline failed: {e}", extra={'classname': 'Main'})
+        logger.error(f"Data processing pipeline failed: {e}")
     finally:
         spark.stop()
 
