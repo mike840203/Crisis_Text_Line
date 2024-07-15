@@ -96,26 +96,6 @@ The Medallion Architecture is implemented to address several key requirements an
    - **Clear Data Lineage**: The transformation steps are well-defined, providing clear data lineage and traceability. This helps in understanding the data flow and transformations applied at each stage.
    - **Ease of Maintenance**: The layered approach simplifies maintenance tasks. Updates and changes can be applied to individual layers without affecting the entire pipeline.
 
-### Implementation
-
-#### Bronze Layer
-- **Purpose**: Ingest and store raw data.
-- **Processes**: Initial data load, basic cleaning (e.g., removing null values, duplicates).
-- **Storage**: Optimized for write-heavy operations.
-
-#### Silver Layer
-- **Purpose**: Refine and transform data.
-- **Processes**: Data type conversion, filtering, enrichment, stratified sampling.
-- **Storage**: Optimized for transformation and processing.
-
-#### Gold Layer
-- **Purpose**: Aggregate and prepare data for analysis.
-- **Processes**: Aggregation, creation of final analytical datasets, computation of key metrics.
-- **Storage**: Optimized for read-heavy analytical operations.
-
-By implementing the Medallion Architecture, we ensure that data processing is robust, scalable, and capable of delivering high-quality datasets ready for advanced analytics and business intelligence.
-
-
 ## Schema Design
 
 The schema files are stored in the `document/schema` folder. Each file corresponds to a specific layer in the Medallion Architecture:
