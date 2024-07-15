@@ -14,7 +14,7 @@ class BronzeLayer:
         Reads raw data from a CSV file into a DataFrame with the specified schema.
         """
         logging.info(f"{self.class_name} - Reading raw data from {file_path}")
-        schema = parse_schema(load_schema("../scripts/schema/bronze_schema.json"))
+        schema = parse_schema(load_schema("../config/schema/bronze_schema.json"))
 
         return self.spark.read.csv(file_path, header=True, schema=schema)
 

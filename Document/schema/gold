@@ -1,0 +1,28 @@
+-- aggregated_services
+root
+ |-- YEAR: integer (nullable = true)
+ |-- GENDER: string (nullable = true)
+ |-- RACE: string (nullable = true)
+ |-- AGE: integer (nullable = true)
+ |-- Total_Services: long (nullable = true)
+ |-- Service_Type_Count: long (nullable = true)
+ |-- STATEFIP: integer (nullable = true)
+
+-- health_outcomes
+root
+ |-- YEAR: integer (nullable = true)
+ |-- AGE: integer (nullable = true)
+ |-- GENDER: string (nullable = true)
+ |-- RACE: string (nullable = true)
+ |-- ETHNIC: string (nullable = true)
+ |-- ANXIETYFLG: integer (nullable = true)
+ |-- DEPRESSFLG: integer (nullable = true)
+ |-- STATEFIP: integer (nullable = true)
+
+-- service_utilization
+root
+ |-- YEAR: integer (nullable = true)
+ |-- EMPLOY: string (nullable = true)
+ |-- Total_Services: long (nullable = true)
+ |-- Service_Type_Count: long (nullable = true)
+ |-- STATEFIP: integer (nullable = true)

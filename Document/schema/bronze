@@ -1,4 +1,3 @@
-Schema:
 root
  |-- YEAR: integer (nullable = true)
  |-- AGE: integer (nullable = true)
@@ -39,8 +38,4 @@ root
  |-- STATEFIP: integer (nullable = true)
  |-- DIVISION: integer (nullable = true)
  |-- REGION: integer (nullable = true)
- |-- CASEID: long (nullable = true)
-
-
-# Get appropriate partition column by script
-    => get_partition_column => STATEFIP (49)
+ |-- CASEID: integer (nullable = true)

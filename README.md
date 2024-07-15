@@ -6,6 +6,7 @@ This project aims to implement a data processing pipeline based on the Medallion
 - [Data Sources](#data-sources)
 - [Data Transformations](#data-transformations)
 - [Medallion Architecture](#medallion-architecture)
+- [Schema Design](#schema-design)
 - [Installation and Usage](#installation-and-usage)
 - [Contact](#contact)
 
@@ -133,6 +134,22 @@ By implementing the Medallion Architecture, we ensure that data processing is ro
 2. **Silver Layer**: Performs transformations and filtering on bronze layer data.
 3. **Gold Layer**: Stores final aggregated and analyzed data.
 
+## Schema Design
+
+The schema files are stored in the `document/schema` folder. Each file corresponds to a specific layer in the Medallion Architecture:
+
+1. **Bronze Schema**:
+    - **File Path**: [`document/schema/bronze`](document/schema/bronze)
+    - **Description**: Defines the schema for the raw data ingestion layer. This schema is used to validate and clean the raw data as it is loaded into the Bronze layer.
+
+2. **Silver Schema**:
+    - **File Path**: [`document/schema/silver`](document/schema/silver)
+    - **Description**: Defines the schema for the transformed data layer. This schema ensures that the data is correctly transformed and enriched after the initial cleaning in the Bronze layer.
+
+3. **Gold Schema**:
+    - **File Path**: [`document/schema/gold`](document/schema/gold)
+    - **Description**: Defines the schema for the aggregated and final data layer. This schema ensures that the data is properly aggregated and formatted for analysis and reporting.
+
 ## Installation and Usage
 
 ### Installation
@@ -154,11 +171,20 @@ By implementing the Medallion Architecture, we ensure that data processing is ro
     ```
     python notebooks/main.py
     ```
+2. Edit table_type, data_type, table_name in the test/run_test.py file to load the data:
+   ```
+   test.load_data(table_type, data_type, table_name)
 
-2. View the generated data report:
-    ```
-    open reports/final_report.html
-    ```
+   table_type = ''  # Change to 'bronze', 'silver', or 'gold'
+   data_type = ''   # Change to 'training', 'testing', 'validation' or leave empty for bronze
+   table_name = ''  # Change to 'aggregated_services', 'health_outcomes', 'service_utilization' or leave empty for bronze/silver
+   ```
+3. Edit SQL in test/query.sql
+4. run the test/run_test.py file to query the data:
+   ```
+   python test/run_test.py
+   ```
+
 
 ## Contact
 

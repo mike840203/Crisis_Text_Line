@@ -1,0 +1,6 @@
+SELECT
+    *
+FROM
+    TABLE
+LIMIT
+    10

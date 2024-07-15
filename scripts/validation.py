@@ -41,7 +41,7 @@ class Validation:
         return True
 
 
-    def validate_bronze(self, df, path='../scripts/schema/bronze_schema.json'):
+    def validate_bronze(self, df, path='../config/schema/bronze_schema.json'):
 
         # Schema validation & Data type validation
         if not self.validate_schema(df, parse_schema(load_schema(path))):
@@ -56,7 +56,7 @@ class Validation:
         return True
 
 
-    def validate_silver(self, df, path='../scripts/schema/silver_schema.json'):
+    def validate_silver(self, df, path='../config/schema/silver_schema.json'):
 
         # Schema validation
         if not self.validate_schema(df, parse_schema(load_schema(path))):
