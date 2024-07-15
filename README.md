@@ -143,7 +143,7 @@ The schema files are stored in the `document/schema` folder. Each file correspon
     - **Description**: Defines the schema for the transformed data layer. This schema ensures that the data is correctly transformed and enriched after the initial cleaning in the Bronze layer.
 
 3. **Gold Schema**:
-    - **File Path**: [`document/schema/gold`](document/schema/gold)
+    - **File Path**: As below
     - **Description**: Defines the schema for the aggregated and final data layer. This schema ensures that the data is properly aggregated and formatted for analysis and reporting.
 
 ### **Patient Demographics Table**
