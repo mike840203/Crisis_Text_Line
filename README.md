@@ -190,18 +190,6 @@ The schema files are stored in the `document/schema` folder. Each file correspon
     - Analysis of mental health disorder prevalence
     - Identifying comorbidities and their impacts
 
-### **Substance Use Table**
-- **Description**: Provides detailed information about substance use issues among patients, essential for developing interventions and understanding substance-related trends.
-- **Columns**:
-    - `CASEID`: Unique Patient Identifier
-    - `SAP`: Substance Use Problem
-    - `SUB`: Substance Use Diagnosis
-    - `ALCSUBFLG`: Alcohol or Substance-Related Disorder Flag
-    - `ANY_SUB_USE`: Flag indicating any substance use disorder, calculated as a logical OR of `SAP`, `SUB`, and `ALCSUBFLG`
-- **Use Cases**:
-    - Substance use trend analysis
-    - Risk prediction for substance abuse
-    - Evaluating the effectiveness of substance abuse programs
 
 ### **Service Utilization Table**
 - **Description**: Captures detailed information about the types and frequencies of services utilized by patients, which can help in resource planning and evaluating service effectiveness.

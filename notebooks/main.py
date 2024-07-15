@@ -82,7 +82,6 @@ def main():
         dataset_functions = {
             "patient_demographics": gold.create_patient_demographics_dataset,
             "mental_health_diagnosis": gold.create_mental_health_diagnosis_dataset,
-            "substance_use": gold.create_substance_use_dataset,
             "service_utilization": gold.create_service_utilization_dataset,
             "outcome_and_label": gold.create_outcome_and_label_dataset
         }

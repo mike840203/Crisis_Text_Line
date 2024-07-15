@@ -33,16 +33,6 @@ class GoldLayer:
 
         mental_health_diagnosis_df.write.mode("overwrite").parquet(output_path)
 
-    def create_substance_use_dataset(self, df, output_path):
-        logging.info(f"{self.class_name} - Creating substance use dataset at: {output_path}")
-
-        substance_use_df = df.select(
-            "CASEID", "SAP", "SUB", "ALCSUBFLG"
-        ).withColumn(
-            "ANY_SUB_USE", (col("SAP") | col("SUB") | col("ALCSUBFLG")).cast("int")
-        )
-
-        substance_use_df.write.mode("overwrite").parquet(output_path)
 
     def create_service_utilization_dataset(self, df, output_path):
         logging.info(f"{self.class_name} - Creating service utilization dataset at: {output_path}")
@@ -95,7 +85,6 @@ if __name__ == "__main__":
     dataset_functions = {
         # "patient_demographics": gold.create_patient_demographics_dataset,
         "mental_health_diagnosis": gold.create_mental_health_diagnosis_dataset,
-        "substance_use": gold.create_substance_use_dataset,
         "service_utilization": gold.create_service_utilization_dataset,
         "outcome_and_label": gold.create_outcome_and_label_dataset
     }
