@@ -77,17 +77,27 @@ def main():
         # Gold Layer
         gold = GoldLayer(spark)
         train_df, test_df, validation_df = df_dict['training'], df_dict['testing'], df_dict['validation']
-        gold.create_aggregated_services_table(train_df, f"{gold_output_path}/aggregated_services/train")
-        gold.create_aggregated_services_table(test_df, f"{gold_output_path}/aggregated_services/test")
-        gold.create_aggregated_services_table(validation_df, f"{gold_output_path}/aggregated_services/validation")
 
-        gold.create_health_outcomes_table(train_df, f"{gold_output_path}/health_outcomes/train")
-        gold.create_health_outcomes_table(test_df, f"{gold_output_path}/health_outcomes/test")
-        gold.create_health_outcomes_table(validation_df, f"{gold_output_path}/health_outcomes/validation")
+        # Define the dataset functions and types
+        dataset_functions = {
+            "patient_demographics": gold.create_patient_demographics_dataset,
+            "mental_health_diagnosis": gold.create_mental_health_diagnosis_dataset,
+            "substance_use": gold.create_substance_use_dataset,
+            "service_utilization": gold.create_service_utilization_dataset,
+            "outcome_and_label": gold.create_outcome_and_label_dataset
+        }
 
-        gold.create_service_utilization_table(train_df, f"{gold_output_path}/service_utilization/train")
-        gold.create_service_utilization_table(test_df, f"{gold_output_path}/service_utilization/test")
-        gold.create_service_utilization_table(validation_df, f"{gold_output_path}/service_utilization/validation")
+        # Define the splits
+        splits = {
+            "training": train_df,
+            "testing": test_df,
+            "validation": validation_df
+        }
+
+        # Loop over the datasets and call the corresponding functions
+        for dataset_name, func in dataset_functions.items():
+            for split_name, split_df in splits.items():
+                func(split_df, f"{gold_output_path}/{dataset_name}/{split_name}")
 
         logger.info("Data processing pipeline completed successfully.")
     except Exception as e:

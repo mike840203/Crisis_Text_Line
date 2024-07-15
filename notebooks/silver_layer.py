@@ -13,7 +13,7 @@ class SilverLayer:
         self.class_name = self.__class__.__name__
 
     def read_config(self, file_path):
-        logging.info(f"{self.class_name} - Get convert configfrom : {file_path}", extra={'classname': self.__class__.__name__})
+        logging.info(f"{self.class_name} - Get convert configfrom : {file_path}")
         with open(file_path, 'r') as f:
             return json.load(f)
 
@@ -22,7 +22,7 @@ class SilverLayer:
         """
         Performs data type transformation num => string
         """
-        logging.info(f"{self.class_name} - Conveted data type: {str(converted_columns)}", extra={'classname': self.__class__.__name__})
+        logging.info(f"{self.class_name} - Conveted data type: {str(converted_columns)}")
         config_path = "../config/data_type.json"
         config = self.read_config(config_path)
 
@@ -35,7 +35,7 @@ class SilverLayer:
         return df
 
     def partition_and_sample_data(self, df, stratified_columns, train_fraction=0.8, validation_fraction=0.1):
-        logging.info(f"{self.class_name} - Sample data to train, test and validation", extra={'classname': self.__class__.__name__})
+        logging.info(f"{self.class_name} - Sample data to train, test and validation")
         # Create a new stratified column containing the combination of all stratified columns
         df = df.withColumn("stratified_col", concat_ws("_", *stratified_columns))
 
@@ -98,8 +98,7 @@ class SilverLayer:
         proportions_df.orderBy(col("train_count").desc()).show(truncate=False)
 
     def write_data(self, df_dict, silver_output_path, partition_column):
-        logging.info(f"{self.class_name} - Writing data to {silver_output_path}, partitioned by {partition_column}",
-                     extra={'classname': self.__class__.__name__})
+        logging.info(f"{self.class_name} - Writing data to {silver_output_path}, partitioned by {partition_column}")
         for name, df in df_dict.items():
             write_data(df, f"{silver_output_path}/{name}", logging, partition_column=partition_column)
 

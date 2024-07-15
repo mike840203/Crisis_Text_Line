@@ -146,6 +146,92 @@ The schema files are stored in the `document/schema` folder. Each file correspon
     - **File Path**: [`document/schema/gold`](document/schema/gold)
     - **Description**: Defines the schema for the aggregated and final data layer. This schema ensures that the data is properly aggregated and formatted for analysis and reporting.
 
+### **Patient Demographics Table**
+- **Description**: Provides comprehensive demographic profiles of patients, essential for understanding population characteristics and segmentation.
+- **Columns**:
+    - `CASEID`: Unique Patient Identifier
+    - `AGE`: Age
+    - `GENDER`: Gender (encoded as 0 for Female, 1 for Male)
+    - `RACE`: Race
+    - `ETHNIC`: Ethnicity
+    - `MARSTAT`: Marital Status
+    - `EDUC`: Education Level
+    - `VETERAN`: Veteran Status (encoded as 0 for No, 1 for Yes)
+    - `STATEFIP`: State Code
+    - `REGION`: Census Region
+    - `DIVISION`: Census Division
+- **Use Cases**:
+    - Demographic analysis and reporting
+    - Customer segmentation and profiling
+    - Identifying demographic trends and patterns
+
+### **Mental Health Diagnosis Table**
+- **Description**: Captures detailed information about patients' mental health diagnoses, enabling analysis of mental health trends and development of predictive models.
+- **Columns**:
+    - `CASEID`: Unique Patient Identifier
+    - `MH1`: Primary Mental Health Diagnosis
+    - `MH2`: Secondary Mental Health Diagnosis
+    - `MH3`: Tertiary Mental Health Diagnosis
+    - `NUMMHS`: Number of Mental Health Diagnoses
+    - `SCHIZOFLG`: Schizophrenia or Other Psychotic Disorder Flag
+    - `DEPRESSFLG`: Depressive Disorder Flag
+    - `BIPOLARFLG`: Bipolar Disorder Flag
+    - `ANXIETYFLG`: Anxiety Disorder Flag
+    - `ADHDFLG`: ADHD Flag
+    - `CONDUCTFLG`: Conduct Disorder Flag
+    - `ODDFLG`: Oppositional Defiant Disorder Flag
+    - `DELIRDEMFLG`: Delirium/Dementia Disorder Flag
+    - `PERSONFLG`: Personality Disorder Flag
+    - `PDDFLG`: Pervasive Developmental Disorder Flag
+    - `TRAUSTREFLG`: Trauma- and Stressor-Related Disorder Flag
+    - `OTHERDISFLG`: Other Mental Disorder Flag
+- **Use Cases**:
+    - Predictive modeling for mental health outcomes
+    - Analysis of mental health disorder prevalence
+    - Identifying comorbidities and their impacts
+
+### **Substance Use Table**
+- **Description**: Provides detailed information about substance use issues among patients, essential for developing interventions and understanding substance-related trends.
+- **Columns**:
+    - `CASEID`: Unique Patient Identifier
+    - `SAP`: Substance Use Problem
+    - `SUB`: Substance Use Diagnosis
+    - `ALCSUBFLG`: Alcohol or Substance-Related Disorder Flag
+    - `ANY_SUB_USE`: Flag indicating any substance use disorder, calculated as a logical OR of `SAP`, `SUB`, and `ALCSUBFLG`
+- **Use Cases**:
+    - Substance use trend analysis
+    - Risk prediction for substance abuse
+    - Evaluating the effectiveness of substance abuse programs
+
+### **Service Utilization Table**
+- **Description**: Captures detailed information about the types and frequencies of services utilized by patients, which can help in resource planning and evaluating service effectiveness.
+- **Columns**:
+    - `CASEID`: Unique Patient Identifier
+    - `CMPSERVICE`: Community-Based Program
+    - `IJSSERVICE`: Institutions Under the Justice System
+    - `OPISERVICE`: Other Psychiatric Inpatient Service
+    - `RTCSERVICE`: Residential Treatment Center Service
+    - `SPHSERVICE`: State Psychiatric Hospital Service
+    - `TOTAL_SERVICES`: Total number of services used, calculated by summing the binary service flags
+- **Use Cases**:
+    - Resource allocation and planning
+    - Service utilization analysis
+    - Evaluating the effectiveness of mental health services
+
+### **Outcome and Label Table**
+- **Description**: Captures key outcomes and labels which are essential for supervised learning models and evaluating treatment effectiveness.
+- **Columns**:
+    - `CASEID`: Unique Patient Identifier
+    - `EMPLOY`: Employment Status at Discharge
+    - `LIVARAG`: Residential Status at Discharge
+    - `DETNLF`: Not in Labor Force Category
+    - `SMISED`: Serious Mental Illness/Serious Emotional Disturbance Status
+    - `VETERAN`: Veteran Status
+    - `AGE_NORMALIZED`: Age, normalized
+- **Use Cases**:
+    - Training supervised learning models for outcome prediction
+    - Analyzing treatment outcomes
+    - Identifying factors associated with successful patient outcomes
 ## Installation and Usage
 
 ### Installation

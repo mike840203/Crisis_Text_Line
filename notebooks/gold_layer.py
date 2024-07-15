@@ -1,35 +1,75 @@
 import logging
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import count, sum
+from pyspark.sql.functions import count, sum, col, when
+
 
 class GoldLayer:
     def __init__(self, spark):
         self.spark = spark
+        self.class_name = self.__class__.__name__
 
-    def create_aggregated_services_table(self, df, output_path):
-        logging.info(f"Create aggregated services table to: {output_path}",
-                     extra={'classname': self.__class__.__name__})
-        aggregated_services_df = df.groupBy("YEAR", "GENDER", "RACE", "AGE", "STATEFIP").agg(
-            sum("SPHSERVICE").alias("Total_Services"),
-            count("SPHSERVICE").alias("Service_Type_Count")
+    def create_patient_demographics_dataset(self, df, output_path):
+        logging.info(f"{self.class_name} - Creating patient demographics dataset at: {output_path}")
+
+        patient_demographics_df = df.select(
+            "CASEID", "AGE", "GENDER", "RACE", "ETHNIC", "MARSTAT", "EDUC", "VETERAN", "STATEFIP", "REGION", "DIVISION"
+        ).withColumn(
+            "GENDER", when(col("GENDER") == "Female", 0).otherwise(1)
+        ).withColumn(
+            "VETERAN", when(col("VETERAN") == "No", 0).otherwise(1)
+        )
+        # Add one-hot encoding or other transformations as needed
+
+        patient_demographics_df.write.partitionBy("STATEFIP").mode("overwrite").parquet(output_path)
+
+    def create_mental_health_diagnosis_dataset(self, df, output_path):
+        logging.info(f"{self.class_name} - Creating mental health diagnosis dataset at: {output_path}")
+
+        mental_health_diagnosis_df = df.select(
+            "CASEID", "MH1", "MH2", "MH3", "NUMMHS", "SCHIZOFLG", "DEPRESSFLG", "BIPOLARFLG",
+            "ANXIETYFLG", "ADHDFLG", "CONDUCTFLG", "ODDFLG", "DELIRDEMFLG", "PERSONFLG", "PDDFLG", "TRAUSTREFLG",
+            "OTHERDISFLG"
         )
 
-        aggregated_services_df.write.partitionBy("STATEFIP").mode("overwrite").parquet(output_path)
+        mental_health_diagnosis_df.mode("overwrite").parquet(output_path)
 
-    def create_health_outcomes_table(self, df, output_path):
-        logging.info(f"Create health outcomes table to: {output_path}",
-                     extra={'classname': self.__class__.__name__})
-        health_outcomes_df = df.select("YEAR", "AGE", "GENDER", "RACE", "ETHNIC", "STATEFIP", "ANXIETYFLG", "DEPRESSFLG")
-        health_outcomes_df.write.partitionBy("STATEFIP").mode("overwrite").parquet(output_path)
+    def create_substance_use_dataset(self, df, output_path):
+        logging.info(f"{self.class_name} - Creating substance use dataset at: {output_path}")
 
-    def create_service_utilization_table(self, df, output_path):
-        logging.info(f"Create service utilization table to: {output_path}",
-                     extra={'classname': self.__class__.__name__})
-        service_utilization_df = df.groupBy("YEAR", "EMPLOY", "STATEFIP").agg(
-            sum("SPHSERVICE").alias("Total_Services"),
-            count("SPHSERVICE").alias("Service_Type_Count")
+        substance_use_df = df.select(
+            "CASEID", "SAP", "SUB", "ALCSUBFLG"
+        ).withColumn(
+            "ANY_SUB_USE", (col("SAP") | col("SUB") | col("ALCSUBFLG")).cast("int")
         )
-        service_utilization_df.write.partitionBy("STATEFIP").mode("overwrite").parquet(output_path)
+
+        substance_use_df.write.mode("overwrite").parquet(output_path)
+
+    def create_service_utilization_dataset(self, df, output_path):
+        logging.info(f"{self.class_name} - Creating service utilization dataset at: {output_path}")
+
+        service_utilization_df = df.select(
+            "CASEID", "CMPSERVICE", "IJSSERVICE", "OPISERVICE", "RTCSERVICE", "SPHSERVICE"
+        ).withColumn(
+            "TOTAL_SERVICES",
+            col("CMPSERVICE") + col("IJSSERVICE") + col("OPISERVICE") + col("RTCSERVICE") + col("SPHSERVICE")
+        )
+
+        service_utilization_df.write.mode("overwrite").parquet(output_path)
+
+    def create_outcome_and_label_dataset(self, df, output_path):
+        logging.info(f"{self.class_name} - Creating outcome and label dataset at: {output_path}")
+
+        # Normalizing age (example of a calculation)
+        age_min = df.agg({"AGE": "min"}).collect()[0][0]
+        age_max = df.agg({"AGE": "max"}).collect()[0][0]
+
+        outcome_and_label_df = df.select(
+            "CASEID", "EMPLOY", "LIVARAG", "DETNLF", "SMISED", "VETERAN", "AGE"
+        ).withColumn(
+            "AGE_NORMALIZED", (col("AGE") - age_min) / (age_max - age_min)
+        )
+
+        outcome_and_label_df.write.mode("overwrite").parquet(output_path)
 
 
 if __name__ == "__main__":
@@ -51,17 +91,23 @@ if __name__ == "__main__":
 
     gold = GoldLayer(spark)
 
-    # Aggregated Services Table
-    gold.create_aggregated_services_table(train_df, f"{gold_output_path}/aggregated_services/train")
-    gold.create_aggregated_services_table(test_df, f"{gold_output_path}/aggregated_services/test")
-    gold.create_aggregated_services_table(validation_df, f"{gold_output_path}/aggregated_services/validation")
+    # Define the dataset functions and types
+    dataset_functions = {
+        "patient_demographics": gold.create_patient_demographics_dataset,
+        "mental_health_diagnosis": gold.create_mental_health_diagnosis_dataset,
+        "substance_use": gold.create_substance_use_dataset,
+        "service_utilization": gold.create_service_utilization_dataset,
+        "outcome_and_label": gold.create_outcome_and_label_dataset
+    }
 
-    # Demographics and Health Outcomes Table
-    gold.create_health_outcomes_table(train_df, f"{gold_output_path}/health_outcomes/train")
-    gold.create_health_outcomes_table(test_df, f"{gold_output_path}/health_outcomes/test")
-    gold.create_health_outcomes_table(validation_df, f"{gold_output_path}/health_outcomes/validation")
+    # Define the splits
+    splits = {
+        # "training": train_df,
+        # "testing": test_df,
+        "validation": validation_df
+    }
 
-    # Service Utilization by Employment Table
-    gold.create_service_utilization_table(train_df, f"{gold_output_path}/service_utilization/train")
-    gold.create_service_utilization_table(test_df, f"{gold_output_path}/service_utilization/test")
-    gold.create_service_utilization_table(validation_df, f"{gold_output_path}/service_utilization/validation")
+    # Loop over the datasets and call the corresponding functions
+    for dataset_name, func in dataset_functions.items():
+        for split_name, split_df in splits.items():
+            func(split_df, f"{gold_output_path}/{dataset_name}/{split_name}")

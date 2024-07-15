@@ -39,7 +39,7 @@ class TestCase:
 if __name__ == "__main__":
 
     test = TestCase()
-    test.load_data('gold', 'train', 'service_utilization')
+    test.load_data('silver', 'training', 'aggregated_services')
     test.create_temp_view()
 
     with open("query.sql", "r") as f:
