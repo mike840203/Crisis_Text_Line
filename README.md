@@ -162,4 +162,4 @@ By implementing the Medallion Architecture, we ensure that data processing is ro
 
 ## Contact
 
-If you have any questions, please contact [mike410123024@gmail.com](mike410123024@gmail.com).
+If you have any questions, please contact [mike410123024@gmail.com](mailto:mike410123024@gmail.com).
