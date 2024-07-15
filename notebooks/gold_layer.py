@@ -31,7 +31,7 @@ class GoldLayer:
             "OTHERDISFLG"
         )
 
-        mental_health_diagnosis_df.mode("overwrite").parquet(output_path)
+        mental_health_diagnosis_df.write.mode("overwrite").parquet(output_path)
 
     def create_substance_use_dataset(self, df, output_path):
         logging.info(f"{self.class_name} - Creating substance use dataset at: {output_path}")
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     # Define the dataset functions and types
     dataset_functions = {
-        "patient_demographics": gold.create_patient_demographics_dataset,
+        # "patient_demographics": gold.create_patient_demographics_dataset,
         "mental_health_diagnosis": gold.create_mental_health_diagnosis_dataset,
         "substance_use": gold.create_substance_use_dataset,
         "service_utilization": gold.create_service_utilization_dataset,
