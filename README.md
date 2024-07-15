@@ -64,21 +64,7 @@ The Silver Layer performs more advanced transformations, such as data type conve
 
 #### Gold Layer
 
-The Gold Layer aggregates the data and creates final datasets ready for analysis. This layer generates specific tables for different analytical purposes, such as aggregated services, health outcomes, and service utilization.
-
-**Steps:**
-
-1. **Create Aggregated Services Table**:
-   - Aggregate the data by `YEAR`, `GENDER`, `RACE`, `AGE`, and `STATEFIP` to calculate the total services and service type count.
-   - Store the aggregated data partitioned by `STATEFIP`.
-
-2. **Create Health Outcomes Table**:
-   - Select relevant columns for health outcomes analysis, such as `YEAR`, `AGE`, `GENDER`, `RACE`, `ETHNIC`, `STATEFIP`, `ANXIETYFLG`, and `DEPRESSFLG`.
-   - Store the health outcomes data partitioned by `STATEFIP`.
-
-3. **Create Service Utilization Table**:
-   - Aggregate the data by `YEAR`, `EMPLOY`, and `STATEFIP` to calculate the total services and service type count.
-   - Store the service utilization data partitioned by `STATEFIP`.
+The Gold Layer aggregates the data and creates final datasets ready for analysis. This layer generates specific tables for different analytical purposes. Sea detail in Schema Design.
 
 This structured approach ensures that data is progressively refined and enriched as it moves through each layer, culminating in high-quality datasets that are ready for detailed analysis and reporting.
 
