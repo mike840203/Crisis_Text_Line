@@ -65,21 +65,3 @@ class Validation:
         logging.info(f"{self.class_name} - Silver validation passed.")
         return True
 
-
-    def validate_gold(self, df, path='../scripts/schema/gold_schema.json', table_nm=None):
-        # Schema validation
-        expected_schema = ["final_column1", "final_column2"]
-        actual_schema = df.columns
-        if set(expected_schema) != set(actual_schema):
-            raise ValueError(f"{self.class_name} - Schema does not match the expected schema.")
-
-        # Business rule validation
-        if df.filter(col("financial_column") < 0).count() > 0:
-            raise ValueError(f"{self.class_name} - Financial column contains negative values.")
-
-        # Data integrity checks
-        if df.join(other_df, "foreign_key").filter(other_df["foreign_key"].isNull()).count() > 0:
-            raise ValueError(f"{self.class_name} - Data integrity check failed: foreign key constraint violated.")
-
-        logging.info(f"{self.class_name} - Gold validation passed.")
-        return True

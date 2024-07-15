@@ -135,6 +135,8 @@ if __name__ == "__main__":
 
     from scripts.validation import Validation
 
+    validation = Validation()
+
     # Configure logging
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_filename = f"{timestamp}.log"
@@ -181,9 +183,9 @@ if __name__ == "__main__":
     # check_proportions(df, df_dict['training'], df_dict['testing'], stratified_columns)
 
     # Validation
-    Validation.validate_silver(df_dict['training'])
-    Validation.validate_silver(df_dict['testing'])
-    Validation.validate_silver(df_dict['validation'])
+    validation.validate_silver(df_dict['training'])
+    validation.validate_silver(df_dict['testing'])
+    validation.validate_silver(df_dict['validation'])
 
     # # Save transformed data to silver layer
-    silver.write_data(df_dict, silver_output_path, "STATEFIP")
+    silver.write_data(df_dict, silver_output_path, stratified_columns)

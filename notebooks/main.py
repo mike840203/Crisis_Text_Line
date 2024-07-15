@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 
 from pyspark import SparkConf
@@ -7,6 +8,7 @@ from bronze_layer import BronzeLayer
 from silver_layer import SilverLayer
 from gold_layer import GoldLayer
 from scripts.validation import Validation
+from scripts.download import Download
 
 # Configure logging
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -25,14 +27,14 @@ def main():
     conf = SparkConf()
     conf.set("spark.network.timeout", "800s")
     conf.set("spark.executor.heartbeatInterval", "100s")
-    conf.set("spark.executor.memory", "4g")
-    conf.set("spark.driver.memory", "4g")
+    conf.set("spark.executor.memory", "8g")
+    conf.set("spark.driver.memory", "8g")
     conf.set("spark.executor.cores", "2")
     conf.set("spark.driver.cores", "2")
 
     # Initialize Spark Session
     spark = SparkSession.builder \
-        .appName("Bronze Layer") \
+        .appName("Main") \
         .config(conf=conf) \
         .getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")
@@ -45,6 +47,15 @@ def main():
         silver_output_path = "../data/silver"
         gold_output_path = "../data/gold"
 
+        # Check if raw data exist
+        if os.path.exists(raw_data_path):
+            logger.info(f"The file {raw_data_path} exists.")
+        else:
+            logger.info(f"The file {raw_data_path} does not exist, start to download file")
+            unzip_path = '/'.join(raw_data_path.split('/')[:-1])
+            download = Download(unzip_path)
+            download.download()
+
         # Bronze Layer
         bronze = BronzeLayer(spark)
         raw_df = bronze.read_raw_data(raw_data_path)
@@ -54,12 +65,14 @@ def main():
 
         # Silver Layer
         silver = SilverLayer(spark)
-        converted_df = silver.convert_columns_to_string(cleaned_df, ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY'])
-        df_dict = silver.partition_and_sample_data(converted_df, ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY'])
+        target_column = ['GENDER', 'RACE', 'ETHNIC', 'MARSTAT', 'EMPLOY']
+        converted_df = silver.convert_columns_to_string(cleaned_df, target_column)
+        df_dict = silver.partition_and_sample_data(converted_df, target_column)
         validation.validate_silver(df_dict['training'])
         validation.validate_silver(df_dict['testing'])
         validation.validate_silver(df_dict['validation'])
-        silver.write_data(df_dict, silver_output_path, "STATEFIP")
+        # # Save transformed data to silver layer
+        silver.write_data(df_dict, silver_output_path, target_column)
 
         # Gold Layer
         gold = GoldLayer(spark)
