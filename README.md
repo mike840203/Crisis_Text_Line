@@ -128,11 +128,7 @@ The Medallion Architecture is implemented to address several key requirements an
 - **Storage**: Optimized for read-heavy analytical operations.
 
 By implementing the Medallion Architecture, we ensure that data processing is robust, scalable, and capable of delivering high-quality datasets ready for advanced analytics and business intelligence.
-### Implementation
 
-1. **Bronze Layer**: Stores raw data with initial cleaning.
-2. **Silver Layer**: Performs transformations and filtering on bronze layer data.
-3. **Gold Layer**: Stores final aggregated and analyzed data.
 
 ## Schema Design
 
